@@ -1,0 +1,33 @@
+CONWAY GAME OF LIFE PSUDOCODE:
+
+Create a matrix 
+--user input for nxm? user input for how many 'live' cells are at the start?
+Fill the matrix with 1s or 0s. [1 = live cell, 0 = no cell]
+
+
+find a way to display the matrix
+--do we just want 1s and 0s to show or should we put more effort into it?
+
+
+--continiously loop through the matrix 
+
+for (int i = 0; i < m -1; i++)
+{
+    for (int j = 0; j < n-1; j++)
+    {
+    --count the number of 'live' cells next to current cell
+    #lc<2 & cell = 1
+        cell = dead
+    #lc>3 & cell = 1
+        cell = dead
+    #lc = 3 & current cell is 0 
+        cell = live
+    else cell stays the same
+    }
+}
+ij
+00 01 02 03 04
+10 11 12 13 14
+20 21 22 23 24
+30 31 32 33 34
+40 41 42 43 44

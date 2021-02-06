@@ -7,9 +7,9 @@
 
 int dead_or_alive(int living, int current){
     int new_int;
-    if (living<2 || living >3 && current == 1){
+    if ((living<2 || living >3) && current == 1){
         new_int = 0;
-    } else if(living ==2 || living ==3 && current == 1){
+    } else if((living ==2 || living ==3) && current == 1){
         new_int = 1;
     }else if(current == 0 && living == 3){
         new_int = 1;
@@ -19,13 +19,19 @@ int dead_or_alive(int living, int current){
     return new_int;
 }
 
-int main(){
+int main(int argc, char** argv){
     //maybe set it up so these variables can be input from user
-    int m = 5;
-    int n = 5; 
-
+    int m = argv[1];
+    int n = argv[2];
+    int iterations = argv[3];
     int world [m][n];
     int new_world [m][n];
+
+    if(argc > 4 || argc < 3){
+        
+        std::cout<<"Please enter 3 arguments";
+        return 1;
+    }
 
     //loading the matrix with "random" values
     for(int i = 0; i < m ; i++){
@@ -120,6 +126,13 @@ int main(){
             }
         }
     std::cout<< '\n';
+    }
+
+    //updating the matrix
+    for(int i = 0; i<m; i++){
+        for(int j = 0; i<n; j++){
+            world[i][j] = new_world[i][j];
+        }
     }
 
     

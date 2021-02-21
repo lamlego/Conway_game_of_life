@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sstream>
+#include <chrono>	 // timing libraries
+#include <vector>
+#include <algorithm>
+using namespace std;
 
 /**takes the number of living cell and the current bit
  * returns a boolean
@@ -42,13 +46,24 @@ bool ** create_world(int m, int n)
 //takes a 2d bool matrix and dimentions and print it
 void print_matrix(bool** world,int m, int n){
     for (int i = 0; i < m; i++){
-            std::cout<<"| ";
+            cout<<"| ";
             for(int j =0; j < n; j++){
-                std::cout<<world[i][j]<<" ";
+                cout<<world[i][j]<<" ";
             }
-            std::cout<<"|\n";
+            cout<<"|\n";
         }
 }
+
+//return the time it take to run next turn 
+auto bench_mark(bool**(*func)(bool**,int,int),bool** world, int m, int n){
+auto const start_time = std::chrono::steady_clock::now();
+func(world,m,n);
+auto const end_time = std::chrono::steady_clock::now();
+return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
+//cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
+}
+
+
 /**
  * takes a 2d boolean matrix,and the dimentions
  * goes through each cell
@@ -106,27 +121,47 @@ bool ** next_turn(bool** world,int m,int n)
 
 int main(int argc, char *argv[]){
     //maybe set it up so these variables can be input from user
-    if(argc > 4 || argc < 3){
-            
-        std::cout<<"Please enter 3 arguments";
+    if(argc < 4){
+        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
         return 1;
     }
     int m = atoi(argv[1]);
     int n = atoi(argv[2]);
     int iterations = atoi(argv[3]);
+
     //Checking data that was entered making sure it is INT
     if((m == 0) | (n == 0) | (iterations == 0)){
-        std::cout<< "must enter 3 INT values";
+        cout<< "must enter 3 INT values";
         return 0;
     }
-    bool** world= create_world(m,n);
-    std::cout << "our initial matrix\n";
-    print_matrix(world,m,n);
-    //
-    for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
-        std::cout<<"\n";
-        std::cout<< iter+1 << "th iteration\n";
-        world = next_turn(world,m,n);
-        print_matrix(world,m,n);
+    if(argc == 5){// if number of tests are set
+        int num_tests = atoi(argv[4]);
+        int time;
+        vector<bool**> test_cases;
+        //create test cases into a vector
+        for (int i = 0; i < num_tests; i++){
+            test_cases.push_back(create_world(m,n));
+        }
+        //run each case
+        for(vector<bool**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
+            time +=bench_mark(next_turn,*i,m,n);
+        }
+        //print out the average
+        cout<< "ran function "<< num_tests << " times, average time is: "<< time/num_tests<<endl;
     }
+
+    //bool** world= create_world(m,n);
+    //cout << "our initial matrix\n";
+    //print_matrix(world,m,n);
+    //auto const start_time = std::chrono::steady_clock::now();
+    /*for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
+        cout<<"\n";
+        cout<< iter+1 << "th iteration\n";
+        world = next_turn(world,m,n);
+        //print_matrix(world,m,n);
+    }*/
+    //bench_mark(next_turn,world,m,n);
+    //auto const end_time = std::chrono::steady_clock::now();
+    // cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
+    //auto const avg_map = csc586::benchmark::benchmark(  next_turn,  world );
 }

@@ -54,15 +54,16 @@ void print_matrix(bool** world,int m, int n){
         }
 }
 
-//return the time it take to run next turn 
-auto bench_mark(bool**(*func)(bool**,int,int),bool** world, int m, int n){
+//return the time it take to run next turn for it number of iterations
+auto bench_mark(bool**(*func)(bool**,int,int),bool** world, int m, int n,int it){
 auto const start_time = std::chrono::steady_clock::now();
-func(world,m,n);
+for(int i = 0; i < it; i++){
+    world = func(world,m,n);
+}
 auto const end_time = std::chrono::steady_clock::now();
 return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
 //cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
 }
-
 
 /**
  * takes a 2d boolean matrix,and the dimentions
@@ -121,34 +122,32 @@ bool ** next_turn(bool** world,int m,int n)
 
 int main(int argc, char *argv[]){
     //maybe set it up so these variables can be input from user
-    if(argc < 4){
+    if(argc != 5){
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
         return 1;
     }
     int m = atoi(argv[1]);
     int n = atoi(argv[2]);
     int iterations = atoi(argv[3]);
-
+    int num_tests = atoi(argv[4]);
     //Checking data that was entered making sure it is INT
-    if((m == 0) | (n == 0) | (iterations == 0)){
-        cout<< "must enter 3 INT values";
+    if((m == 0) | (n == 0) | (iterations == 0) | (num_tests == 0)){
+        cout<< "must enter 4 INT values";
         return 0;
     }
-    if(argc == 5){// if number of tests are set
-        int num_tests = atoi(argv[4]);
-        int time;
-        vector<bool**> test_cases;
-        //create test cases into a vector
-        for (int i = 0; i < num_tests; i++){
-            test_cases.push_back(create_world(m,n));
-        }
-        //run each case
-        for(vector<bool**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
-            time +=bench_mark(next_turn,*i,m,n);
-        }
-        //print out the average
-        cout<< "ran function "<< num_tests << " times, average time is: "<< time/num_tests<<endl;
+    int time;
+    vector<bool**> test_cases;
+    //create test cases into a vector
+    for (int i = 0; i < num_tests; i++){
+        test_cases.push_back(create_world(m,n));
     }
+    //run each case
+    for(vector<bool**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
+        time +=bench_mark(next_turn,*i,m,n,iterations);
+    }
+    //print out the average
+    cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
+    
 
     //bool** world= create_world(m,n);
     //cout << "our initial matrix\n";

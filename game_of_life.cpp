@@ -79,38 +79,37 @@ bool ** next_turn(bool** world,int m,int n)
             //std::cout<<"| ";
             for(int j = 0; j < n; j++){
                 int living = 0;//use count how many cells are alive surrounding our cell
-
-                //check cell to the left  
-                if(i > 0 ){
-                    living += world[i-1][j];
-                }
-                //check cell to the right
-                if(i < m-1){
-                    living += world[i+1][j];
-                }
-                //check cell to the top
-                if(j > 0){
-                    living += world[i][j-1];
-                }
-                //check cell to the bottom
-                if(j < n-1){
-                    living += world[i][j+1];
-                }
                 //check cell to the top left
                 if(i > 0 && j > 0){
                     living += world[i-1][j-1];
                 }
-                //check cell to the bottom right
-                if(i< m-1 && j < n-1){
-                    living += world[i+1][j+1];
+                //check cell to the left  
+                if(i > 0 ){
+                    living += world[i-1][j];
                 }
                 //check cell to the bottom left
                 if(i > 0 && j < n-1){
                     living += world[i-1][j+1];
                 }
+                 //check cell to the top
+                if(j > 0){
+                    living += world[i][j-1];
+                }   
+                //check cell to the bottom
+                if(j < n-1){
+                    living += world[i][j+1];
+                }
                 //check cell to the top right
                 if(i < m-1 && j > 0){
                     living += world[i+1][j-1];
+                }
+                //check cell to the right
+                if(i < m-1){
+                    living += world[i+1][j];
+                }
+                //check cell to the bottom right
+                if(i< m-1 && j < n-1){
+                    living += world[i+1][j+1];
                 }
                 new_world[i][j] = dead_or_alive(living, world[i][j]);
                 //std::cout<< new_world[i][j]<<" ";

@@ -46,8 +46,8 @@ vector<vector<bool>> create_world(int m, int n)
 }
 //takes a 2d bool matrix and dimentions and print it
 void print_matrix(vector<vector<bool>> world){
-    int m = sizeof(world);
-    int n = sizeof(world[0]);
+    int m = world.size();
+    int n = world[0].size();
     for (int i = 0; i < m; i++){
             cout<<"| ";
             for(int j =0; j < n; j++){
@@ -62,7 +62,7 @@ auto bench_mark(vector<vector<bool>>(*func)(vector<vector<bool>>),vector<vector<
 auto const start_time = std::chrono::steady_clock::now();
     for(int i=0; i< it; i++){
         //cout<<"\nthis is the "<< i+1 << " iteration\n";
-        //print_matrix(world,m,n);
+        //print_matrix(world);
         world = func(world);
     }
     
@@ -79,8 +79,10 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
 vector<vector<bool>> next_turn(vector<vector<bool>> world)
 {
         vector<vector<bool>> new_world;
-        int m = sizeof(world);
-        int n = sizeof(world[0]);
+        int m = world.size();
+        //cout<<"m : "<< m<< " \n";
+        int n = world.size();
+        //cout<<"n : "<< n<< " \n";
         //new_world = new bool*[m]; //initialize the first dimention of new_world
         for(int i = 0;i < m;i++){
             //new_world[i] = new bool[n];//initialize each horizontal array of new_world

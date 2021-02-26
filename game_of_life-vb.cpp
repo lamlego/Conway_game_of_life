@@ -45,7 +45,9 @@ vector<vector<bool>> create_world(int m, int n)
     return world;
 }
 //takes a 2d bool matrix and dimentions and print it
-void print_matrix(vector<vector<bool>> world,int m, int n){
+void print_matrix(vector<vector<bool>> world){
+    int m = sizeof(world);
+    int n = sizeof(world[0]);
     for (int i = 0; i < m; i++){
             cout<<"| ";
             for(int j =0; j < n; j++){
@@ -56,12 +58,12 @@ void print_matrix(vector<vector<bool>> world,int m, int n){
 }
 
 //return the time it take to run next turn for it number of iterations
-auto bench_mark(vector<vector<bool>>(*func)(vector<vector<bool>>,int,int),vector<vector<bool>> world, int m, int n,int it){
+auto bench_mark(vector<vector<bool>>(*func)(vector<vector<bool>>),vector<vector<bool>> world,int it){
 auto const start_time = std::chrono::steady_clock::now();
     for(int i=0; i< it; i++){
         //cout<<"\nthis is the "<< i+1 << " iteration\n";
         //print_matrix(world,m,n);
-        world = func(world,m,n);
+        world = func(world);
     }
     
 auto const end_time = std::chrono::steady_clock::now();
@@ -74,9 +76,11 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
  * goes through each cell
  * determine the next frame of the matrix 
  */
-vector<vector<bool>> next_turn(vector<vector<bool>> world,int m,int n)
+vector<vector<bool>> next_turn(vector<vector<bool>> world)
 {
         vector<vector<bool>> new_world;
+        int m = sizeof(world);
+        int n = sizeof(world[0]);
         //new_world = new bool*[m]; //initialize the first dimention of new_world
         for(int i = 0;i < m;i++){
             //new_world[i] = new bool[n];//initialize each horizontal array of new_world
@@ -151,7 +155,7 @@ int main(int argc, char *argv[]){
     //cout<<"hi";
     //run each case
     for(vector<vector<vector<bool>>>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
-        time +=bench_mark(next_turn,*i,m,n,iterations);
+        time +=bench_mark(next_turn,*i,iterations);
     }
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;

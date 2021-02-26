@@ -59,7 +59,7 @@ void print_matrix(vector<vector<bool>> world,int m, int n){
 auto bench_mark(vector<vector<bool>>(*func)(vector<vector<bool>>,int,int),vector<vector<bool>> world, int m, int n,int it){
 auto const start_time = std::chrono::steady_clock::now();
     for(int i=0; i< it; i++){
-        cout<<"\nthis is the "<< i+1 << " iteration\n";
+        //cout<<"\nthis is the "<< i+1 << " iteration\n";
         //print_matrix(world,m,n);
         world = func(world,m,n);
     }

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <iostream>
 #include <time.h>
 #include <sstream>
@@ -11,45 +12,46 @@
 #include <bitset>
 using namespace std;
 
-volatile int sink; 
+//volatile int sink; 
 
 /*
 **This object will hold everything now. 
 */
 class world{
 private:
-    char *cells; 
-    int width;
+    unsigned char *cells; 
+    unsigned int width;
     unsigned int width_bytes;
-    int length;
+    unsigned int length;
     unsigned int length_bytes;
 public:
-    world(int m, int n);
+    world(unsigned int m, unsigned int n);
     ~world(void);
-    void create_world(int m, int n);
     void copy_cells(world &current);
-    void set_cell(int x, int y);
-    void clear_cell(int x, int y);
-    int cell_state(int x, int y);
+    void set_cell(unsigned int x, unsigned int y);
+    void clear_cell(unsigned int x, unsigned int y);
+    int cell_state(unsigned int x, unsigned int y);
     void next_turn(world& new_world);
-    void print_world(world& current, int m, int n);
+    void print_world(world& current, unsigned int m, unsigned int n);
 };
 
-void world::create_world(int m, int n)
+world create_world(world& current, unsigned int m, unsigned int n)
 {
-    world current(m, n);
+    unsigned x,y;
     srand(time(0));
+    unsigned initial_length = (m * n) /2;
+    do{
+        x = rand()%m;
+        y = rand()%n;
+        
+        current.set_cell(x, y);
+        
+        initial_length -= 1;
+        
+    }while (-initial_length);
+
     
-    for(int i = 0; i < m ; i++){
-        for(int j = 0; j< n; j++){
-            int random = rand()%2;
-            if (random == 1){
-                current.set_cell(i,j);
-            }else{
-                current.clear_cell(i,j);
-            }
-        }
-    }
+    return current;
 }
 /*
 //return the time it take to run next turn for it number of iterations
@@ -70,10 +72,10 @@ int main(int argc, char *argv[])
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
         return 1;
     }
-    const int m = atoi(argv[1]);
-    int n = atoi(argv[2]);
-    int iterations = atoi(argv[3]);
-    int num_tests = atoi(argv[4]);
+    unsigned int m = atoi(argv[1]);
+    unsigned int n = atoi(argv[2]);
+    unsigned int iterations = atoi(argv[3]);
+    unsigned int num_tests = atoi(argv[4]);
     //Checking data that was entered making sure it is INT
     if((m == 0) | (n == 0) | (iterations == 0) | (num_tests == 0)){
         cout<< "must enter 4 INT values";
@@ -81,13 +83,14 @@ int main(int argc, char *argv[])
     }
     
     world nw(m, n);
-    nw.create_world(m, n);
+    create_world(nw, m, n);
     world next(m,n);
-    nw.print_world(nw, m, n);
+    nw.copy_cells(next);
+    nw.print_world(next, m, n);
     nw.next_turn(next);
     next.print_world(next, m, n);
     
-    }
+}
     /*
     vector<int**> test_cases;
     //create test cases into a vector
@@ -105,13 +108,14 @@ int main(int argc, char *argv[])
 /*
 ** world constructor, will take in the parameters from the commandline. 
 */
-world::world(int m, int n)
+world::world(unsigned int m, unsigned int n)
 {
     width = m;
     length = n;
     width_bytes = (m + 7) / 8;
     length_bytes = width_bytes *m;
-    cells = new char[length_bytes];
+    cells = new unsigned char[length_bytes];
+    memset(cells, 0, length_bytes);
     //somehing here to clear all cells to start
 }
 
@@ -134,27 +138,27 @@ void world::copy_cells(world &current)
 /*
 **Wil set the cell passed in to on, or 1
 */
-void world::set_cell(int m, int n)
+void world::set_cell(unsigned int m, unsigned int n)
 {
-    char *cell_ptr = cells + (n * width_bytes) + (m / 8);
-    *(cell_ptr) &= ~(0x80 >> (m &0x07));
+    unsigned char *cell_ptr = cells + (n * width_bytes) + (m / 8);
+    *(cell_ptr) |= 0x80 >> (m &0x07);
 }
 
 /**
  * Will turn the cell passed in to off, or 0
 */
-void world::clear_cell(int m, int n)
+void world::clear_cell(unsigned int m, unsigned int n)
 {
-    char *cell_ptr = cells + (n * width_bytes) + ( m/8);
+    unsigned char *cell_ptr = cells + (n * width_bytes) + ( m/8);
     *(cell_ptr) &= ~(0x80 >> (m & 0x07));
 }
 
 /**
  * Returns the passed in cells current state
 */
-int world::cell_state(int m, int n)
+int world::cell_state(unsigned int m, unsigned int n)
 {
-    char* cell_ptr; 
+    unsigned char* cell_ptr; 
     //un comment this clock if we wna to wrap the edges
     /*
     while(m<0) m += width;
@@ -181,9 +185,9 @@ void world::next_turn(world& new_world)
 {
         unsigned int living;
 
-        for(int i = 0;i < length;i++){
+        for(unsigned int i = 0;i < length;i++){
 
-            for(int j = 0; j < width; j++){
+            for(unsigned int j = 0; j < width; j++){
                 living = cell_state(j-1, i-1) + cell_state(j, i-1)+
                     cell_state(j+1, i-1) + cell_state(j-1, i) +
                     cell_state(j+1, i) + cell_state(j -1, i +1) + 
@@ -204,10 +208,10 @@ void world::next_turn(world& new_world)
         }
 }
 
-void world::print_world(world &current, int m, int n){
-    for (int i = 0; i < m; i++){
+void world::print_world(world &current, unsigned int m, unsigned int n){
+    for (unsigned int i = 0; i < m; i++){
         cout<< "\n";
-        for(int j = 0; j <n; j++){
+        for(unsigned int j = 0; j <n; j++){
             cout<< current.cell_state(m,n) << ' ';
         }
     }

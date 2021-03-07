@@ -72,51 +72,60 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
  */
 int ** next_turn(int** world,int m,int n)
 {
-        int ** new_world = 0;
-        new_world = new int*[m]; //initialize the first dimention of new_world
-        for(int i = 0;i < m;i++){
-            new_world[i] = new int[n];//initialize each horizontal array of new_world
-            //std::cout<<"| ";
-            for(int j = 0; j < n; j++){
-                int living = 0;//use count how many cells are alive surrounding our cell
-                //check cell to the top left
-                if(i > 0 && j > 0){
-                    living += world[i-1][j-1];
-                }
-                //check cell to the left  
-                if(i > 0 ){
-                    living += world[i-1][j];
-                }
-                //check cell to the bottom left
-                if(i > 0 && j < n-1){
-                    living += world[i-1][j+1];
-                }
-                 //check cell to the top
-                if(j > 0){
-                    living += world[i][j-1];
-                }   
-                //check cell to the bottom
-                if(j < n-1){
-                    living += world[i][j+1];
-                }
-                //check cell to the top right
-                if(i < m-1 && j > 0){
-                    living += world[i+1][j-1];
-                }
-                //check cell to the right
-                if(i < m-1){
-                    living += world[i+1][j];
-                }
-                //check cell to the bottom right
-                if(i< m-1 && j < n-1){
-                    living += world[i+1][j+1];
-                }
-                new_world[i][j] = dead_or_alive(living, world[i][j]);
-                //std::cout<< new_world[i][j]<<" ";
+    int ** new_world = 0;
+    new_world = new int*[m]; //initialize the first dimention of new_world
+    for(int i = 0;i < m;i++){
+        new_world[i] = new int[n];//initialize each horizontal array of new_world
+        //std::cout<<"| ";
+        for(int j = 0; j < n; j++){
+            int living = 0;//use count how many cells are alive surrounding our cell
+            //check cell to the top left
+            if(i > 0 && j > 0){
+                living += world[i-1][j-1];
             }
-            //std::cout<<"|"<< i <<"\n";
-        }//std::cout<<"\n";
-    return new_world;
+            //check cell to the left  
+            if(i > 0 ){
+                living += world[i-1][j];
+            }
+            //check cell to the bottom left
+            if(i > 0 && j < n-1){
+                living += world[i-1][j+1];
+            }
+                //check cell to the top
+            if(j > 0){
+                living += world[i][j-1];
+            }   
+            //check cell to the bottom
+            if(j < n-1){
+                living += world[i][j+1];
+            }
+            //check cell to the top right
+            if(i < m-1 && j > 0){
+                living += world[i+1][j-1];
+            }
+            //check cell to the right
+            if(i < m-1){
+                living += world[i+1][j];
+            }
+            //check cell to the bottom right
+            if(i< m-1 && j < n-1){
+                living += world[i+1][j+1];
+            }
+            new_world[i][j] = dead_or_alive(living, world[i][j]);
+            //std::cout<< new_world[i][j]<<" ";
+        }
+        //std::cout<<"|"<< i <<"\n";
+    }//std::cout<<"\n";
+
+    for(int i = 0; i < m; i++){
+        for(int j = 0; j < n; j++){
+            world[i][j] = new_world[i][j];
+        }
+        delete new_world[i];
+    }
+    delete new_world;
+
+    return world;
 }
 
 int main(int argc, char *argv[]){

@@ -27,6 +27,7 @@ int dead_or_alive(int living, int current){
            newcell = 0;
        }
     }
+    
     return newcell;
 }
 //creates a matrix of m by n and loading cells with 0|1
@@ -118,14 +119,12 @@ int ** next_turn(int** world,int m,int n)
     }//std::cout<<"\n";
 
     for(int i = 0; i < m; i++){
-        for(int j = 0; j < n; j++){
-            world[i][j] = new_world[i][j];
-        }
-        delete new_world[i];
+        
+        delete world[i];
     }
-    delete new_world;
+    delete world;
 
-    return world;
+    return new_world;
 }
 
 int main(int argc, char *argv[]){

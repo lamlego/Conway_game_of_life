@@ -14,15 +14,11 @@ using namespace std;
 int dead_or_alive(int living, int current){
     int newcell = current;
     //std::cout<< current <<" ";
-    if(current == 0){
-        if(living == 3){
-            newcell = 1;
-        }
+    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+        newcell = 1;
     }
     else {
-       if(living < 2 || living > 3){
-           newcell = 0;
-       }
+       newcell = 0;
     }
     
     return newcell;
@@ -30,13 +26,18 @@ int dead_or_alive(int living, int current){
 //creates a matrix of m by n and loading cells with 0|1
 int ** create_world(int m, int n)
 {
+    
     int** world = 0;
     world = new int*[m];
     srand(time(0));
-    for(int i = 0; i < m ; i++){
+    for(int i = 0; i <= m ; i++){
         world[i] = new int[n];
-        for(int j = 0; j< n; j++){
-           world[i][j] = rand()%2;
+        for(int j = 0; j<= n; j++){
+            if(i == 0 || i == m-1 || j == 0 || j == n-1){
+                world[i][j] = 0;
+            }else{
+                world[i][j] = rand()%2;
+            }
         }
     }
     return world;
@@ -70,51 +71,24 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
  */
 int ** next_turn(int** world,int m,int n)
 {
-    int ** new_world = 0;
+    //cout<< "in next turn";
+    int ** new_world; 
     new_world = new int*[m]; //initialize the first dimention of new_world
+    new_world[0] = new int[n];
     for(int i = 0;i < m;i++){
-        new_world[i] = new int[n];//initialize each horizontal array of new_world
-        //std::cout<<"| ";
-        for(int j = 0; j < n; j++){
-            int living = 0;//use count how many cells are alive surrounding our cell
-            //check cell to the top left
-            if(i > 0 && j > 0){
-                living += world[i-1][j-1];
-            }
-            //check cell to the left  
-            if(i > 0 ){
-                living += world[i-1][j];
-            }
-            //check cell to the bottom left
-            if(i > 0 && j < n-1){
-                living += world[i-1][j+1];
-            }
-                //check cell to the top
-            if(j > 0){
-                living += world[i][j-1];
-            }   
-            //check cell to the bottom
-            if(j < n-1){
-                living += world[i][j+1];
-            }
-            //check cell to the top right
-            if(i < m-1 && j > 0){
-                living += world[i+1][j-1];
-            }
-            //check cell to the right
-            if(i < m-1){
-                living += world[i+1][j];
-            }
-            //check cell to the bottom right
-            if(i< m-1 && j < n-1){
-                living += world[i+1][j+1];
-            }
-            new_world[i][j] = dead_or_alive(living, world[i][j]);
-            //std::cout<< new_world[i][j]<<" ";
-        }
-        //std::cout<<"|"<< i <<"\n";
-    }//std::cout<<"\n";
+        new_world[i] = new int[n];     
+        for(int j = 1; j < n-1; j++){
+            if(i ==0||i==m-1){
+                new_world[i][j] = 0;
+            }else{
+                int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
+                            world[i][j+1] + world[i+1][j-1] + world[i+1][j] +
+                            world[i+1][j+1] + world[i][j-1];
 
+                new_world[i][j] = dead_or_alive(living, world[i][j]);
+            }
+        }
+    }
     delete[] world;
 
     return new_world;
@@ -126,21 +100,27 @@ int main(int argc, char *argv[]){
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
         return 1;
     }
+    
     int m = atoi(argv[1]);
+    m = m + 2;
     int n = atoi(argv[2]);
+    n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
+    
     //Checking data that was entered making sure it is INT
-    if((m == 0) | (n == 0) | (iterations == 0) | (num_tests == 0)){
+    if((m == 0) || (n == 0) || (iterations == 0) || (num_tests == 0)){
         cout<< "must enter 4 INT values";
         return 0;
     }
-    int time;
+    int time = 0;
     vector<int**> test_cases;
+    //cout<< "in main before going to create world";
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(create_world(m,n));
     }
+    //cout<<"in main before going to next turn";
     //run each case
     for(vector<int**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
         time +=bench_mark(next_turn,*i,m,n,iterations);
@@ -148,16 +128,16 @@ int main(int argc, char *argv[]){
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
     
-
-    //int** world= create_world(m,n);
-    //cout << "our initial matrix\n";
-    //print_matrix(world,m,n);
-    //auto const start_time = std::chrono::steady_clock::now();
-    /*for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
+    /*
+    int** world= create_world(m,n);
+    cout << "our initial matrix\n";
+    print_matrix(world,m,n);
+    auto const start_time = std::chrono::steady_clock::now();
+    for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
         cout<<"\n";
         cout<< iter+1 << "th iteration\n";
         world = next_turn(world,m,n);
-        //print_matrix(world,m,n);
+        print_matrix(world,m,n);
     }*/
     //bench_mark(next_turn,world,m,n);
     //auto const end_time = std::chrono::steady_clock::now();

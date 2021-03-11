@@ -30,9 +30,9 @@ int ** create_world(int m, int n)
     int** world = 0;
     world = new int*[m];
     srand(time(0));
-    for(int i = 0; i <= m ; i++){
+    for(int i = 0; i < m ; i++){
         world[i] = new int[n];
-        for(int j = 0; j<= n; j++){
+        for(int j = 0; j< n; j++){
             if(i == 0 || i == m-1 || j == 0 || j == n-1){
                 world[i][j] = 0;
             }else{
@@ -71,14 +71,19 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
  */
 int ** next_turn(int** world,int m,int n)
 {
+    int** new_world; 
+    new_world = new int*[m];
+    for(int i = 0; i<m; i++){
+        new_world[i] = new int[n];
+        for(int j = 0; j<n; j++){
+            new_world[i][j] = 0;
+        }
+    }
     //cout<< "in next turn";
-    int ** new_world; 
-    new_world = new int*[m]; //initialize the first dimention of new_world
-    new_world[0] = new int[n];
-    for(int i = 0;i < m;i++){
-        new_world[i] = new int[n];     
+    
+    for(int i = 0;i < m ;i++){ 
         for(int j = 1; j < n-1; j++){
-            if(i ==0||i==m-1){
+            if(i ==0||i==m-1 || j == 0 || j == n-1){
                 new_world[i][j] = 0;
             }else{
                 int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
@@ -126,7 +131,7 @@ int main(int argc, char *argv[]){
         time +=bench_mark(next_turn,*i,m,n,iterations);
     }
     //print out the average
-    cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
+    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
     
     /*
     int** world= create_world(m,n);

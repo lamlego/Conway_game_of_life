@@ -26,7 +26,7 @@ int dead_or_alive(int living, int current){
 //creates a matrix of m by n and loading cells with 0|1
 int ** create_world(int m, int n)
 {
-    cout<< "in creating world";
+    
     int** world = 0;
     world = new int*[m];
     srand(time(0));
@@ -71,7 +71,7 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
  */
 int ** next_turn(int** world,int m,int n)
 {
-    cout<< "in next turn";
+    
     int ** new_world = 0;
     new_world = new int*[m]; //initialize the first dimention of new_world
     for(int i = 0; i <= m; i++){
@@ -89,11 +89,8 @@ int ** next_turn(int** world,int m,int n)
         }
     }
 
-    for(int i = 0; i < m; i++){
-        
-        delete world[i];
-    }
-    //delete[] world;
+
+    delete[] world;
 
     return new_world;
 }
@@ -119,12 +116,12 @@ int main(int argc, char *argv[]){
     }
     int time = 0;
     vector<int**> test_cases;
-    cout<< "in main before going to create world";
+    
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(create_world(m,n));
     }
-    cout<<"in main before going to next turn";
+    
     //run each case
     for(vector<int**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
         time +=bench_mark(next_turn,*i,m,n,iterations);

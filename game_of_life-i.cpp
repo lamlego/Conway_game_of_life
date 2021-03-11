@@ -20,10 +20,7 @@ int dead_or_alive(int living, int current){
         }
     }
     else {
-       if(living < 2){
-           newcell = 0;
-       }
-       else if (living > 3){
+       if(living < 2 || living > 3){
            newcell = 0;
        }
     }
@@ -118,11 +115,7 @@ int ** next_turn(int** world,int m,int n)
         //std::cout<<"|"<< i <<"\n";
     }//std::cout<<"\n";
 
-    for(int i = 0; i < m; i++){
-        
-        delete world[i];
-    }
-    delete world;
+    delete[] world;
 
     return new_world;
 }

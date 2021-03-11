@@ -26,7 +26,7 @@ int dead_or_alive(int living, int current){
 //creates a matrix of m by n and loading cells with 0|1
 int ** create_world(int m, int n)
 {
-    cout<< "in creating world";
+    
     int** world = 0;
     world = new int*[m];
     srand(time(0));
@@ -72,7 +72,7 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
 int ** next_turn(int** world,int m,int n)
 {
     //cout<< "in next turn";
-    int ** new_world;
+    int ** new_world; 
     new_world = new int*[m]; //initialize the first dimention of new_world
     new_world[0] = new int[n];
     for(int i = 0;i < m;i++){
@@ -89,11 +89,6 @@ int ** next_turn(int** world,int m,int n)
             }
         }
     }
-
-    /*for(int i = 0; i < m; i++){
-        
-        delete world[i];
-    }*/
     delete[] world;
 
     return new_world;

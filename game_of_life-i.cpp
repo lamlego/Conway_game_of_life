@@ -81,17 +81,13 @@ int ** next_turn(int** world,int m,int n)
     }
     //cout<< "in next turn";
     
-    for(int i = 0;i < m ;i++){ 
+    for(int i = 1;i < m-1 ;i++){ 
         for(int j = 1; j < n-1; j++){
-            if(i ==0||i==m-1 || j == 0 || j == n-1){
-                new_world[i][j] = 0;
-            }else{
                 int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
                             world[i][j+1] + world[i+1][j-1] + world[i+1][j] +
                             world[i+1][j+1] + world[i][j-1];
 
                 new_world[i][j] = dead_or_alive(living, world[i][j]);
-            }
         }
     }
     for(int i = 0; i<m; i++){
@@ -136,17 +132,18 @@ int main(int argc, char *argv[]){
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
     
-    /*
+    /*//uncomment this section to print out a iteration 
     int** world= create_world(m,n);
     cout << "our initial matrix\n";
     print_matrix(world,m,n);
-    auto const start_time = std::chrono::steady_clock::now();
+    //auto const start_time = std::chrono::steady_clock::now();
     for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
         cout<<"\n";
         cout<< iter+1 << "th iteration\n";
         world = next_turn(world,m,n);
         print_matrix(world,m,n);
-    }*/
+    }
+    */
     //bench_mark(next_turn,world,m,n);
     //auto const end_time = std::chrono::steady_clock::now();
     // cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";

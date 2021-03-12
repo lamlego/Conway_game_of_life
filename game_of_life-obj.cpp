@@ -69,6 +69,7 @@ auto bench_mark(int m, int n,int it){
         first.next_turn(new_world);
     }
     auto const end_time = std::chrono::steady_clock::now();
+    
     return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
 
 }
@@ -158,18 +159,10 @@ void world::clear_all(){
 int world::dead_or_alive(int living, int current){
     int newcell = current;
     //std::cout<< current <<" ";
-    if(current == 0){
-        if(living == 3){
-            newcell = 1;
-        }
-    }
-    else {
-       if(living < 2){
-           newcell = 0;
-       }
-       else if (living > 3){
-           newcell = 0;
-       }
+    if((current == 1 &&(living ==3 || living ==2)) || (current == 0 && living == 3)){
+        newcell = 1;
+    }else{
+        newcell = 0;
     }
     return newcell;
 }

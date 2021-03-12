@@ -94,6 +94,9 @@ int ** next_turn(int** world,int m,int n)
             }
         }
     }
+    for(int i = 0; i<m; i++){
+        delete world[i];
+    }
     delete[] world;
 
     return new_world;

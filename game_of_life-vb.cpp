@@ -118,7 +118,7 @@ int main(int argc, char *argv[]){
     }
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
-    
+    /*
     //uncomment this section to print out a iteration
     vector<bool> world= create_world(m,n);
     cout << "our initial matrix\n";
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]){
         world = next_turn(world,m,n);
         print_matrix(world,m,n);
     }
-    
+    */
     //bench_mark(next_turn,world,m,n);
     //auto const end_time = std::chrono::steady_clock::now();
     // cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";

@@ -11,8 +11,8 @@ using namespace std;
 /**takes the number of living cell and the current bit
  * returns an int
  */
-int dead_or_alive(int living, int current){
-    int newcell = current;
+bool dead_or_alive(int living, bool current){
+    bool newcell = current;
     //std::cout<< current <<" ";
     if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
         newcell = 1;

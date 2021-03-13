@@ -90,6 +90,9 @@ int ** next_turn(int** world,int m,int n)
                 new_world[i][j] = dead_or_alive(living, world[i][j]);
         }
     }
+    for(int i = 0; i<m; i++){
+        delete world[i];
+    }
     delete[] world;
 
     return new_world;

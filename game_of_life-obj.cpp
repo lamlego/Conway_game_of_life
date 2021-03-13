@@ -42,41 +42,38 @@ public:
     void print_world();
 };
 
-void here_we_go(int m, int n, int num_tests){
+world here_we_go(int m, int n, int num_tests){
     world nw(m, n);
     nw.set_length(m);
     nw.set_width(n);
     nw.clear_all();
-    
-    world new_world(m, n);
-    new_world.set_length(m);
-    new_world.set_width(n);
-    new_world.clear_all();
 
     nw.create_world();
-
-    nw.print_world();
-    for(int i = 0; i < num_tests; i++){
-        nw.next_turn(new_world);
-        nw.copy_cells(new_world);
-        nw.print_world();
-    }
+    return nw;
     
 }
 
-/*
+
 //return the time it take to run next turn for it number of iterations
-auto bench_mark(void(*func)(world), int m, int n,int it){
+auto bench_mark(int m, int n,int it){
+    world first(n, m);
+    first.set_length(m);
+    first.set_width(n);
+    first.clear_all();
+
     auto const start_time = std::chrono::steady_clock::now();
     for(int i = 0; i < it; i++){
         world new_world(m, n);
-        new_world.func(m,n);
+        new_world.set_length(m);
+        new_world.set_width(n);
+        first.next_turn(new_world);
     }
     auto const end_time = std::chrono::steady_clock::now();
+    
     return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
 
 }
-*/
+
 int main(int argc, char *argv[])
 {
     if(argc != 5){
@@ -93,19 +90,24 @@ int main(int argc, char *argv[])
         return 0;
     }
     
-    /*
-    vector<int**> test_cases;
+    world new_world(m, n);
+    new_world.set_length(m);
+    new_world.set_width(n);
+    new_world.clear_all();
+
+    int time = 0;
+    vector<world> test_cases;
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(here_we_go(m, n, num_tests));
     }
     //run each case
-    for(vector<int**>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
-        time +=bench_mark(new_world.next_turn(new_world),*i,m,n,iterations);
+    for(vector<world>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
+        time +=bench_mark(m,n,iterations);
     }
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
-    */
+    
 }
 /*
 ** world constructor, will take in the parameters from the commandline. 
@@ -157,18 +159,10 @@ void world::clear_all(){
 int world::dead_or_alive(int living, int current){
     int newcell = current;
     //std::cout<< current <<" ";
-    if(current == 0){
-        if(living == 3){
-            newcell = 1;
-        }
-    }
-    else {
-       if(living < 2){
-           newcell = 0;
-       }
-       else if (living > 3){
-           newcell = 0;
-       }
+    if((current == 1 &&(living ==3 || living ==2)) || (current == 0 && living == 3)){
+        newcell = 1;
+    }else{
+        newcell = 0;
     }
     return newcell;
 }

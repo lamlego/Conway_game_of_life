@@ -6,6 +6,7 @@
 #include <chrono>	 // timing libraries
 #include <vector>
 #include <algorithm>
+#include <omp.h>
 using namespace std;
 
 /**takes the number of living cell and the current bit
@@ -80,7 +81,7 @@ int ** next_turn(int** world,int m,int n)
         }
     }
     //cout<< "in next turn";
-    
+    #pragma omp parallel for
     for(int i = 1;i < m-1 ;i++){ 
         for(int j = 1; j < n-1; j++){
                 int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
@@ -89,9 +90,6 @@ int ** next_turn(int** world,int m,int n)
 
                 new_world[i][j] = dead_or_alive(living, world[i][j]);
         }
-    }
-    for(int i = 0; i<m; i++){
-        delete world[i];
     }
     delete[] world;
 
@@ -104,7 +102,7 @@ int main(int argc, char *argv[]){
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
         return 1;
     }
-    
+    // omp_set_num_threads(2);
     int m = atoi(argv[1]);
     m = m + 2;
     int n = atoi(argv[2]);
@@ -131,11 +129,12 @@ int main(int argc, char *argv[]){
     }
     //print out the average
     cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
-    
-    /*//uncomment this section to print out a iteration 
+    /*
+    //uncomment this section to print out a iteration
     int** world= create_world(m,n);
     cout << "our initial matrix\n";
     print_matrix(world,m,n);
+    
     //auto const start_time = std::chrono::steady_clock::now();
     for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
         cout<<"\n";

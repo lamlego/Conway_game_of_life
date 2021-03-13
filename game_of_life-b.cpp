@@ -6,6 +6,7 @@
 #include <chrono>	 // timing libraries
 #include <vector>
 #include <algorithm>
+#include <omp.h>
 using namespace std;
 
 /**takes the number of living cell and the current bit
@@ -71,6 +72,7 @@ bool * next_turn(bool* world,int m,int n)
 {
     bool* new_world;
     new_world= new bool[m*n];
+        #pragma omp parallel for
            for(int i = 0;i < m ;i++){ 
                 for(int j = 0; j < n; j++){
                     if(i==0||i==m-1||j==0||j==n-1){

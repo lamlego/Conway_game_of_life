@@ -92,8 +92,8 @@ bool * next_turn(bool* world,int m,int n)
 
 int main(int argc, char *argv[]){
     //maybe set it up so these variables can be input from user
-    if(argc != 5){
-        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
+    if(argc <5 || argc> 6){
+        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests][number of threads](if not decleared use all)]";
         return 1;
     }
     
@@ -103,7 +103,9 @@ int main(int argc, char *argv[]){
     n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
-    
+    if(argc==6){
+        omp_set_num_threads(atoi(argv[5]));
+    }
     //Checking data that was entered making sure it is INT
     if((m == 0) || (n == 0) || (iterations == 0) || (num_tests == 0)){
         cout<< "must enter 4 INT values";

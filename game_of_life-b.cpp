@@ -10,7 +10,7 @@
 using namespace std;
 
 /**takes the number of living cell and the current bit
- * returns an int
+ * returns an boolean
  */
 bool dead_or_alive(int living, bool current){
     bool newcell = current;
@@ -24,7 +24,7 @@ bool dead_or_alive(int living, bool current){
     
     return newcell;
 }
-//creates a matrix of m by n and loading cells with 0|1
+//creates a matrix of m by n and loading cells with 0|1 and surround it with a border of 0
 bool * create_world(int m, int n)
 {
     bool* world;
@@ -91,12 +91,11 @@ bool * next_turn(bool* world,int m,int n)
 }
 
 int main(int argc, char *argv[]){
-    //maybe set it up so these variables can be input from user
     if(argc <5 || argc> 6){
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests][number of threads](if not decleared use all)]";
         return 1;
     }
-    
+    //set size larger so we can add border of 0 surrounding the map
     int m = atoi(argv[1]);
     m = m + 2;
     int n = atoi(argv[2]);
@@ -108,17 +107,15 @@ int main(int argc, char *argv[]){
     }
     //Checking data that was entered making sure it is INT
     if((m == 0) || (n == 0) || (iterations == 0) || (num_tests == 0)){
-        cout<< "must enter 4 INT values";
+        cout<< "must enter INT values";
         return 0;
     }
     int time = 0;
     vector<bool*> test_cases;
-    //cout<< "in main before going to create world";
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(create_world(m,n));
     }
-    //cout<<"in main before going to next turn";
     //run each case
     for(vector<bool*>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
         time +=bench_mark(next_turn,*i,m,n,iterations);
@@ -146,7 +143,6 @@ int main(int argc, char *argv[]){
     world[(m/2+2)*m+(n/2+2)] =1;
     cout << "our initial matrix\n";
     print_matrix(world,m,n);
-    //auto const start_time = std::chrono::steady_clock::now();
     for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
         cout<<"\n";
         cout<< iter+1 << "th iteration\n";
@@ -154,8 +150,4 @@ int main(int argc, char *argv[]){
         print_matrix(world,m,n);
     }
     */
-    //bench_mark(next_turn,world,m,n);
-    //auto const end_time = std::chrono::steady_clock::now();
-    // cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
-    //auto const avg_map = csc586::benchmark::benchmark(  next_turn,  world );
 }

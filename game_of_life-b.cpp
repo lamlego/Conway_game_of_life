@@ -73,18 +73,18 @@ bool * next_turn(bool* world,int m,int n)
     bool* new_world;
     new_world= new bool[m*n];
         #pragma omp parallel for
-           for(int i = 0;i < m ;i++){ 
-                for(int j = 0; j < n; j++){
-                    if(i==0||i==m-1||j==0||j==n-1){
-                        new_world[i*m+j] =0;
-                    }else{
-                        int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
-                                    world[i*m+(j+1)] + world[i*m+(j-1)] + 
-                                    world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
-                        new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
-                    }
+        for(int i = 0;i < m ;i++){ 
+            for(int j = 0; j < n; j++){
+                if(i==0||i==m-1||j==0||j==n-1){
+                    new_world[i*m+j] =0;
+                }else{
+                    int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
+                                world[i*m+(j+1)] + world[i*m+(j-1)] + 
+                                world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
+                    new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
                 }
             }
+        }
     //free(world); this is slower
     delete[] world;
     return new_world;
@@ -124,10 +124,26 @@ int main(int argc, char *argv[]){
         time +=bench_mark(next_turn,*i,m,n,iterations);
     }
     //print out the average
-    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
+    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<" us"<<endl;
     /*
     //uncomment this section to print out a iteration
     bool* world= create_world(m,n);
+    for(int i=0;i<m*n;i++){
+        world[i] =0;
+    }
+    //this creates stable pattern, turns into a 6x6 cross without center in 3rd turn
+    world[(m/2)*m+(n/2)-2] =1;
+    world[(m/2)*m+(n/2) -1] =1;
+    world[(m/2)*m+(n/2)+1] =1;
+    world[(m/2)*m+(n/2)+2] =1;
+    world[(m/2-1)*m+(n/2)] =1;
+    world[(m/2-2)*m+(n/2)] =1;
+    world[(m/2-2)*m+(n/2)-2] =1;
+    world[(m/2-2)*m+(n/2)+2] =1;
+    world[(m/2+1)*m+(n/2)] =1;
+    world[(m/2+2)*m+(n/2)] =1;
+    world[(m/2+2)*m+(n/2-2)] =1;
+    world[(m/2+2)*m+(n/2+2)] =1;
     cout << "our initial matrix\n";
     print_matrix(world,m,n);
     //auto const start_time = std::chrono::steady_clock::now();

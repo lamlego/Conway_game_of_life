@@ -10,7 +10,7 @@
 using namespace std;
 
 /**takes the number of living cell and the current bit
- * returns an int
+ * returns an boolean
  */
 bool dead_or_alive(int living, bool current){
     bool newcell = current;
@@ -24,7 +24,7 @@ bool dead_or_alive(int living, bool current){
     
     return newcell;
 }
-//creates a matrix of m by n and loading cells with 0|1
+//creates a matrix of m by n and loading cells with 0|1 and surround it with a border of 0
 bool * create_world(int m, int n)
 {
     bool* world;
@@ -73,62 +73,76 @@ bool * next_turn(bool* world,int m,int n)
     bool* new_world;
     new_world= new bool[m*n];
         #pragma omp parallel for
-           for(int i = 0;i < m ;i++){ 
-                for(int j = 0; j < n; j++){
-                    if(i==0||i==m-1||j==0||j==n-1){
-                        new_world[i*m+j] =0;
-                    }else{
-                        int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
-                                    world[i*m+(j+1)] + world[i*m+(j-1)] + 
-                                    world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
-                        new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
-                    }
+        for(int i = 0;i < m ;i++){ 
+            for(int j = 0; j < n; j++){
+                if(i==0||i==m-1||j==0||j==n-1){
+                    new_world[i*m+j] =0;
+                }else{
+                    int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
+                                world[i*m+(j+1)] + world[i*m+(j-1)] + 
+                                world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
+                    new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
                 }
             }
+        }
     //free(world); this is slower
     delete[] world;
     return new_world;
 }
 
 int main(int argc, char *argv[]){
-    //maybe set it up so these variables can be input from user
-    if(argc != 5){
-        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
+    if(argc <5 || argc> 6){
+        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests][number of threads](if not decleared use all)]";
         return 1;
     }
-    
+    //set size larger so we can add border of 0 surrounding the map
     int m = atoi(argv[1]);
     m = m + 2;
     int n = atoi(argv[2]);
     n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
-    
+    if(argc==6){
+        omp_set_num_threads(atoi(argv[5]));
+    }
     //Checking data that was entered making sure it is INT
     if((m == 0) || (n == 0) || (iterations == 0) || (num_tests == 0)){
-        cout<< "must enter 4 INT values";
+        cout<< "must enter INT values";
         return 0;
     }
     int time = 0;
     vector<bool*> test_cases;
-    //cout<< "in main before going to create world";
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(create_world(m,n));
     }
-    //cout<<"in main before going to next turn";
     //run each case
     for(vector<bool*>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
         time +=bench_mark(next_turn,*i,m,n,iterations);
     }
     //print out the average
-    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<endl;
+    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<" us"<<endl;
     /*
     //uncomment this section to print out a iteration
     bool* world= create_world(m,n);
+    for(int i=0;i<m*n;i++){
+        world[i] =0;
+    }
+    //this creates stable pattern, turns into a 6x6 cross without center in 3rd turn
+    world[(m/2)*m+(n/2)-2] =1;
+    world[(m/2)*m+(n/2) -1] =1;
+    world[(m/2)*m+(n/2)+1] =1;
+    world[(m/2)*m+(n/2)+2] =1;
+    world[(m/2-1)*m+(n/2)] =1;
+    world[(m/2-2)*m+(n/2)] =1;
+    world[(m/2-2)*m+(n/2)-2] =1;
+    world[(m/2-2)*m+(n/2)+2] =1;
+    world[(m/2+1)*m+(n/2)] =1;
+    world[(m/2+2)*m+(n/2)] =1;
+    world[(m/2+2)*m+(n/2-2)] =1;
+    world[(m/2+2)*m+(n/2+2)] =1;
     cout << "our initial matrix\n";
     print_matrix(world,m,n);
-    //auto const start_time = std::chrono::steady_clock::now();
     for(int iter = 0; iter < iterations; iter++){// print out each iteration of the matric
         cout<<"\n";
         cout<< iter+1 << "th iteration\n";
@@ -136,8 +150,4 @@ int main(int argc, char *argv[]){
         print_matrix(world,m,n);
     }
     */
-    //bench_mark(next_turn,world,m,n);
-    //auto const end_time = std::chrono::steady_clock::now();
-    // cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
-    //auto const avg_map = csc586::benchmark::benchmark(  next_turn,  world );
 }

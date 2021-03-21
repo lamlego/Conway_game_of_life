@@ -72,19 +72,22 @@ bool * next_turn(bool* world,int m,int n)
 {
     bool* new_world;
     new_world= new bool[m*n];
-        #pragma omp parallel for
-        for(int i = 0;i < m ;i++){ 
-            for(int j = 0; j < n; j++){
-                if(i==0||i==m-1||j==0||j==n-1){
-                    new_world[i*m+j] =0;
-                }else{
-                    int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
-                                world[i*m+(j+1)] + world[i*m+(j-1)] + 
-                                world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
-                    new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
-                }
+    //uncomment for coarse grained parallelism
+    #pragma omp parallel for
+    for(int i = 0;i < m ;i++){ 
+        //uncomment for fine grained parallelism
+        //#pragma omp parallel for
+        for(int j = 0; j < n; j++){
+            if(i==0||i==m-1||j==0||j==n-1){
+                new_world[i*m+j] =0;
+            }else{
+                int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
+                            world[i*m+(j+1)] + world[i*m+(j-1)] + 
+                            world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
+                new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
             }
         }
+    }
     //free(world); this is slower
     delete[] world;
     return new_world;

@@ -80,9 +80,11 @@ int ** next_turn(int** world,int m,int n)
             new_world[i][j] = 0;
         }
     }
-    //cout<< "in next turn";
-    #pragma omp parallel for
+    //uncomment for coarse grained parallelism
+    //#pragma omp parallel for
     for(int i = 1;i < m-1 ;i++){ 
+        //uncomment for fine grained parallelism
+        //#pragma omp parallel for
         for(int j = 1; j < n-1; j++){
                 int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
                             world[i][j+1] + world[i+1][j-1] + world[i+1][j] +
@@ -97,11 +99,6 @@ int ** next_turn(int** world,int m,int n)
 }
 
 int main(int argc, char *argv[]){
-    //maybe set it up so these variables can be input from user
-    if(argc != 5){
-        cout<<"Usage: ./gol [width] [height] [iterations] [number of tests](optional)";
-        return 1;
-    }
     // omp_set_num_threads(2);
     int m = atoi(argv[1]);
     m = m + 2;
@@ -109,6 +106,9 @@ int main(int argc, char *argv[]){
     n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
+    if(argc==6){
+        omp_set_num_threads(atoi(argv[5]));
+    }
     
     //Checking data that was entered making sure it is INT
     if((m == 0) || (n == 0) || (iterations == 0) || (num_tests == 0)){

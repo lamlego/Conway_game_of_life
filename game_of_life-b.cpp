@@ -28,15 +28,14 @@ bool dead_or_alive(int living, bool current){
 bool * create_world(int m, int n)
 {
     bool* world;
-    world = new bool[m*n];
+    //creating the array so that it is loaded with 0s to avoid if statments. 
+    world = new bool[m*n]();
+    
     srand(time(0));
     for(int i = 0; i < m ; i++){
-        for(int j = 0; j< n; j++){
-            if(i == 0 || i == m-1 || j == 0 || j == n-1){
-                world[i*m+j] = 0;
-            }else{
-                world[i*m+j] = rand()%2;
-            }
+        //only setting the inside box to randomized values of 1 or 0
+        for(int j = 1; j< n-1; j++){
+            world[i*m+j] = rand()%2;
         }
     }
     return world;

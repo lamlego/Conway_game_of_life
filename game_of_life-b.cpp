@@ -70,16 +70,30 @@ return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_t
 bool * next_turn(bool* world,int m,int n)
 {
     bool* new_world;
+<<<<<<< HEAD
     new_world= new bool[m*n]();
         #pragma omp parallel for
         for(int i = 1;i < m-1 ;i++){ 
             for(int j = 0; j < n; j++){
+=======
+    new_world= new bool[m*n];
+    //uncomment for coarse grained parallelism
+    #pragma omp parallel for
+    for(int i = 0;i < m ;i++){ 
+        //uncomment for fine grained parallelism
+        //#pragma omp parallel for
+        for(int j = 0; j < n; j++){
+            if(i==0||i==m-1||j==0||j==n-1){
+                new_world[i*m+j] =0;
+            }else{
+>>>>>>> 8451cb1a96aa59677ed324abedf432c2ca4dfc01
                 int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
                             world[i*m+(j+1)] + world[i*m+(j-1)] + 
                             world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
                 new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
             }
         }
+    }
     //free(world); this is slower
     delete[] world;
     return new_world;

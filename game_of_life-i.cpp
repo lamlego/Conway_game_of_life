@@ -80,11 +80,9 @@ int ** next_turn(int** world,int m,int n)
             new_world[i][j] = 0;
         }
     }
-    //uncomment for coarse grained parallelism
-    //#pragma omp parallel for
+    //cout<< "in next turn";
+    #pragma omp parallel for
     for(int i = 1;i < m-1 ;i++){ 
-        //uncomment for fine grained parallelism
-        //#pragma omp parallel for
         for(int j = 1; j < n-1; j++){
                 int living = world[i-1][j-1] + world[i-1][j] + world[i-1][j+1] +
                             world[i][j+1] + world[i+1][j-1] + world[i+1][j] +

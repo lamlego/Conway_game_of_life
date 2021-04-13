@@ -12,10 +12,12 @@ void print_matrix(int** world,int m, int n){
             }
             cout<<"|\n";
         }
+    cout<<"\n";
 }
 
 int ** create_empty_world(int m, int n){
-    int **world = new int*[m];
+    int **world = 0;
+    world = new int*[m];
     for(int i = 0; i < m; i++){
         world[i] = new int[n];
         for(int j = 0; j < n; j++){
@@ -28,13 +30,14 @@ int ** create_empty_world(int m, int n){
 
 //just a normal CPU function here. making a world filled with values of 0 or 1 
 int ** create_world(int m, int n){
-    int **world = new int*[m];
+    int **world = 0;
+    world = new int*[m];
     int value;
     for (int i = 0; i < m; i ++){
         world[i] = new int[n];
         for(int j =  0 ; j < n; j ++){
             //setting up padding
-            if(i == 0 || j == 0 || i == m || j == n){
+            if(i == 0 || j == 0 || i == m -2 || j == n -2){
                 world[i][j] = 0;
             }else{
                 srand(time(NULL));
@@ -47,18 +50,6 @@ int ** create_world(int m, int n){
     return world; 
 }
 
-int dead_or_alive(int living, int current){
-    int newcell = current;
-    //std::cout<< current <<" ";
-    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
-        newcell = 1;
-    }
-    else {
-       newcell = 0;
-    }
-    
-    return newcell;
-}
 
 /*
   this will take the world, the new world, the hight and width of the worlds
@@ -71,12 +62,19 @@ void next_turn(int **world, int **new_world, int m, int n ){
     //getting the index that we are currently in 
     int const index_x = threadIdx.x + blockIdx.x * blockDim.x;
     
-    if(index_x < m){
-        for(int index_y = 0; index_y < n ; index_y++){
+    if(index_x < m + 1 && index_x != 0){
+        for(int index_y = 1; index_y < n - 1 ; index_y++){
+            
             int living = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
                         world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
                         world[index_x+1][index_y+1] + world[index_x][index_y-1];
-            new_world[index_x][index_y] = dead_or_alive(living, world[index_x][index_y]);
+
+            int current = world[index_x][index_x];
+            int new_cell = 0;
+            if((current == 1 && (living == 3 || living == 2)) || current == 0 && living == 3){
+                new_cell = 1;
+            }
+            new_world[index_x][index_y] = new_cell;
         }
     }
 }
@@ -92,7 +90,9 @@ int main(int argc, char *argv[]){
 
     //gathering data from the arguments
     int m = atoi(argv[1]);
+    m = m + 2;
     int n = atoi(argv[2]);
+    n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
 
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]){
     }
 
     //create a world and a new world
-    int **world = create_world(m + 2, n + 2);
-    int **new_world = create_empty_world(m + 2, n + 2);
+    int **world = create_world(m, n);
+    int **new_world = create_empty_world(m, n);
 
     print_matrix(world, m, n); 
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
 
     //do next_turn on GPU
     for(int i = 0; i < iterations; i ++){
-        next_turn<<< NUM_BLOCKS, NUM_THREADS_PER_BLOCK >>>(dev_world, dev_new_world, m, n);
+        next_turn<<<1,1>>>(dev_world, dev_new_world, m, n);
     }
 
     //copy result back to host
@@ -133,6 +133,12 @@ int main(int argc, char *argv[]){
 
     print_matrix(new_world, m, n);
     //free space that we created
+    for(int i = 0; i < m ; i++){
+        free(world[i]);
+        free(new_world[i]);
+    }
+    free(world);
+    free(new_world);
     cudaFree(dev_new_world);
     cudaFree(dev_world);
 }

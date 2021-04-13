@@ -28,7 +28,7 @@ int ** create_empty_world(int m, int n){
 
 //just a normal CPU function here. making a world filled with values of 0 or 1 
 int ** create_world(int m, int n){
-    int **world = new int[m];
+    int **world = new int*[m];
     int value;
     for (int i = 0; i < m; i ++){
         world[i] = new int[n];
@@ -70,9 +70,9 @@ __global__
 void next_turn(int **world, int **new_world, int m, int n ){
     //getting the index that we are currently in 
     int const index_x = threadIdx.x + blockIdx.x * blockDim.x;
-    int const index_y = threadIdx.y + blockIdx.y * blockDim.y;
+    
     if(index_x < m){
-        if(index_y < n){
+        for(index_y = 0, index_y < n ; index_y++){
             int living = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
                         world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
                         world[index_x+1][index_y+1] + world[index_x][index_y-1];
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
 
     //do next_turn on GPU
     for(int i = 0; i < iterations; i ++){
-        next_turn<<< NUM_BLOCKS, NUM_BLOCKS, NUM_THREADS_PER_BLOCK >>>(dev_world, dev_new_world, m, n);
+        next_turn<<< NUM_BLOCKS, NUM_THREADS_PER_BLOCK >>>(dev_world, dev_new_world, m, n);
     }
 
     //copy result back to host

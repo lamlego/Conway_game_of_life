@@ -4,6 +4,16 @@
 #include <time.h> 
 using namespace std;
 
+void print_matrix(int** world,int m, int n){
+    for (int i = 0; i < m; i++){
+            cout<<"| ";
+            for(int j =0; j < n; j++){
+                cout<<world[i][j]<<" ";
+            }
+            cout<<"|\n";
+        }
+}
+
 int ** create_empty_world(int m, int n){
     int world = new int[m];
     for(int i = 0; i < m; i++){
@@ -23,20 +33,52 @@ int ** create_world(int m, int n){
     for (int i = 0; i < m; i ++){
         world[i] = new int[n];
         for(int j =  0 ; j < n; j ++){
-            srand(time(NULL));
-            //giving the world[m][n] a value between 1 and 0
-            value = rand() % 2; 
-            world[i][j] = value;
+            //setting up padding
+            if(i == 0 || j == 0 || i == m || j == n){
+                world[i][j] = 0;
+            }else{
+                srand(time(NULL));
+                //giving the world[m][n] a value between 1 and 0
+                value = rand() % 2; 
+                world[i][j] = value;
+            }
         }
     }
     return world; 
 }
 
+int dead_or_alive(int living, int current){
+    int newcell = current;
+    //std::cout<< current <<" ";
+    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+        newcell = 1;
+    }
+    else {
+       newcell = 0;
+    }
+    
+    return newcell;
+}
+
+/*
+  this will take the world, the new world, the hight and width of the worlds
+  We will then go through every value, sum the value of it's 8 neighbours 
+  and give a result of 1 or 0 for each cell
+  we will do this for the number of turns that we have specified in the command line arguments. 
+*/
 __global__
 void next_turn(int **world, int **new_world, int m, int n ){
     //getting the index that we are currently in 
-    int const index = threadIdx.x + blockIdx.x * blockDim.x;
-    
+    int const index_x = threadIdx.x + blockIdx.x * blockDim.x;
+    int const index_y = threadIdx.y + blockIdx.y * blockDim.y;
+    if(index_x < m){
+        if(index_y < n){
+            int sum = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
+                        world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
+                        world[index_x+1][index_y+1] + world[index_x][index_y-1];
+            new_world[index_x][index_y] = dead_or_alive(living, world[index_x][index_y]);
+        }
+    }
 }
 
 #define NUM_BLOCKS 1
@@ -63,21 +105,33 @@ int main(int argc, char *argv[]){
     }
 
     //create a world and a new world
-    int **world = create_world(m, n);
-    int **new_world = create_empty_world(m, n);
+    int **world = create_world(m + 2, n + 2);
+    int **new_world = create_empty_world(m + 2, n + 2);
+
+    print_matrix(world, m, n); 
 
     //create a matrix of ints for the device
     int **dev_world;
     int **dev_new_world;
     cudaMalloc((void **)&dev_world, size);
     cudaMalloc((void **)&dev_new_world, size);
+    if(dev_world == NULL) {std::cerr << "not able to alloc memory on device" << std::endl;}
+    if(dev_new_world == NULL) {std::cerr << "not able to alloc memory on device" << std::endl;}
 
     //copy values from host to device
     cudaMemcpy(dev_world, world, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_new_world, new_world, size, cudaMemcpyHostToDevice);
+    //cudaMemcpy(dev_new_world, new_world, size, cudaMemcpyHostToDevice);
+    //no output yet, don't need to copy it over
 
     //do next_turn on GPU
+    for(int i = 0; i < iterations; i ++){
+        next_turn<<< NUM_BLOCKS, NUM_BLOCKS, NUM_THREADS_PER_BLOCK >>>(dev_world, dev_new_world, m, n);
+    }
 
+    //copy result back to host
+    cudaMemcpy(new_world, dev_new_world, size, cudaMemcpyDevicetoHost);
+
+    print_matrix(new_world, m, n);
     //free space that we created
     cudaFree(dev_new_world);
     cudaFree(dev_world);

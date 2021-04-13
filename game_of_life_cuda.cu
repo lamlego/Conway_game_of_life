@@ -72,7 +72,7 @@ void next_turn(int **world, int **new_world, int m, int n ){
     int const index_x = threadIdx.x + blockIdx.x * blockDim.x;
     
     if(index_x < m){
-        for(index_y = 0, index_y < n ; index_y++){
+        for(int index_y = 0; index_y < n ; index_y++){
             int living = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
                         world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
                         world[index_x+1][index_y+1] + world[index_x][index_y-1];

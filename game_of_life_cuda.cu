@@ -15,7 +15,7 @@ void print_matrix(int** world,int m, int n){
 }
 
 int ** create_empty_world(int m, int n){
-    int world = new int[m];
+    int world = new int*[m];
     for(int i = 0; i < m; i++){
         world[i] = new int[n];
         for(int j; j < n; j++){

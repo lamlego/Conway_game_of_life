@@ -15,10 +15,10 @@ void print_matrix(int** world,int m, int n){
 }
 
 int ** create_empty_world(int m, int n){
-    int world = new int*[m];
+    int **world = new int*[m];
     for(int i = 0; i < m; i++){
         world[i] = new int[n];
-        for(int j; j < n; j++){
+        for(int j = 0; j < n; j++){
             world[i][j] = 0;
         }
     }
@@ -28,7 +28,7 @@ int ** create_empty_world(int m, int n){
 
 //just a normal CPU function here. making a world filled with values of 0 or 1 
 int ** create_world(int m, int n){
-    int world = new int[m];
+    int **world = new int[m];
     int value;
     for (int i = 0; i < m; i ++){
         world[i] = new int[n];
@@ -73,7 +73,7 @@ void next_turn(int **world, int **new_world, int m, int n ){
     int const index_y = threadIdx.y + blockIdx.y * blockDim.y;
     if(index_x < m){
         if(index_y < n){
-            int sum = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
+            int living = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
                         world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
                         world[index_x+1][index_y+1] + world[index_x][index_y-1];
             new_world[index_x][index_y] = dead_or_alive(living, world[index_x][index_y]);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]){
     }
 
     //copy result back to host
-    cudaMemcpy(new_world, dev_new_world, size, cudaMemcpyDevicetoHost);
+    cudaMemcpy(new_world, dev_new_world, size, cudaMemcpyDeviceToHost);
 
     print_matrix(new_world, m, n);
     //free space that we created

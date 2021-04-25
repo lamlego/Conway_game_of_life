@@ -63,20 +63,23 @@ void next_turn(int **world, int **new_world, int m, int n ){
     int const index_x = threadIdx.x + blockIdx.x * blockDim.x;
     
     if(index_x < m + 1 && index_x != 0){
+        
         for(int index_y = 1; index_y < n - 1 ; index_y++){
             
             int living = world[index_x-1][index_y-1] + world[index_x-1][index_y] + world[index_x-1][index_y+1] +
                         world[index_x][index_y+1] + world[index_x+1][index_y-1] + world[index_x+1][index_y] +
                         world[index_x+1][index_y+1] + world[index_x][index_y-1];
-
-            int current = world[index_x][index_x];
+            
+            int current = world[index_x][index_y];
             int new_cell = 0;
             if((current == 1 && (living == 3 || living == 2)) || current == 0 && living == 3){
                 new_cell = 1;
             }
             new_world[index_x][index_y] = new_cell;
         }
+        
     }
+
 }
 
 //set up numblocks to be a calculation of how many are needed
@@ -111,7 +114,6 @@ int main(int argc, char *argv[]){
 
     print_matrix(world, m, n); 
 
-    cout<< "about to copy stuff over";
     //create a matrix of ints for the device
     int **dev_world;
     int **dev_new_world;
@@ -124,13 +126,14 @@ int main(int argc, char *argv[]){
     cudaMemcpy(dev_world, world, size, cudaMemcpyHostToDevice);
     //cudaMemcpy(dev_new_world, new_world, size, cudaMemcpyHostToDevice);
     //no output yet, don't need to copy it over
-
+    
     //set up timing here, no need to take into account how long it takes to copy stuffs over. 
 
     //do next_turn on GPU
-    for(int i = 0; i < iterations; i ++){
-        next_turn<<< numblocks, blocksize >>>(dev_world, dev_new_world, m, n);
-    }
+    //for(int i = 0; i < iterations; i ++){
+    next_turn<<< numblocks, blocksize >>>(dev_world, dev_new_world, m, n);
+        
+    //}
 
     //copy result back to host
     cudaMemcpy(new_world, dev_new_world, size, cudaMemcpyDeviceToHost);

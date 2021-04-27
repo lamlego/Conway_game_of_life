@@ -9,55 +9,113 @@
 #include <omp.h>
 using namespace std;
 
-namespace GPU {
-
-
-    class game_map{
-        bool *top;
-        bool *core;
-        bool *bot;
-    };
-
-    auto bench_mark(void*(*func)(bool*,int,int),bool* world, int m, int n,int it){
+namespace gpu {
+     //takes pointers
+     void split(bool **world,bool **top, bool **bot,int m, int n){
+        m = m+2;
+        int count = m;
+        bool *t = *top;
+        bool *w = *world;
+        bool *b = *bot;
+        for(int i = 0; i< m*n; i++){
+            t[count] = w[i];
+            //cout<<w[i];
+            count++;
+        }
+        count = 0;
+        //cout<<"top filled\n";
+        for(int i = m; i< m*n; i++){
+    
+            b[count] = w[i];
+            count++;
+        }
+    }
+    __global__
+        void next_turn(bool *top, bool *core, bool* bot, bool *result,int m, int n){
+            int i = blockIdx.x * blockDim.x + threadIdx.x;
+            int living = 0;
+            bool current =0;
+            if(i%(m+2)!=0 || (i+1)%(m+2)!= 0){
+                living == top[i-1] + top[i] + top[i+1] +
+                        core[i-1] +      + core[i+1] +
+                        bot[i-1] + bot[i] + bot[i+1];
+                if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+                result[i] = 1;
+                }
+                else {
+                    result[i] = 0;
+                }
+            }
+        }
+    auto bench_mark(void(*func)(bool *,bool *,bool *,bool *,int,int),bool *world, int m, int n,int it){
         auto const start_time = std::chrono::steady_clock::now();
-            int size = n * m * sizeof(bool)
-            bool *d_world;
-            bool *d_new_world;//output
-            cudaMalloc((void **)&d_world,size);
-            cudaMalloc((void**)&d_new_world,size);
-            cudaMemcpy(d_world, world, size, cudaMemcpyHostToDevice);
+            int size = (m*(n+2))*sizeof(bool);
+            bool *top, *bot;
+            bool *d_top, *d_core, *d_bot, *d_result;
+            cudaMalloc((void**)&d_top,size);
+            cudaMalloc((void **)&d_core,size);
+            cudaMalloc((void **)&d_bot,size);
+            cudaMalloc((void**)&d_result,size);
+            
+            top = (bool *)malloc(size);
+            bot = (bool *)malloc(size);
             //cudaMemcpy(d_new_world, new_world, size, cudaMemcpyHostToDevice);
             for (int i=0; i< it; i++){
                 //call cuda function here
+                gpu::split(&world,&top,&bot,m,n);
+                cudaMemcpy(d_top, top, size, cudaMemcpyHostToDevice);
+                cudaMemcpy(d_core, world, size, cudaMemcpyHostToDevice);
+                cudaMemcpy(d_bot, bot, size, cudaMemcpyHostToDevice);
+                gpu::next_turn<<<10,12>>>(d_top,d_core,d_bot,d_result,m,n);
+                cudaMemcpy(world,&d_result,size,cudaMemcpyDeviceToHost);
             }
-
             auto const end_time = std::chrono::steady_clock::now();
+            free(top);free(bot);
+            cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);cudaFree(d_result);
             return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
             //cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
             }
         
-        __global__void next_turn(bool* new_world,const bool* world,const bool* top,const bool* bot,const int m, const int n){
-            int i = blockIdx.x * blockDim.x + threadIdx.x;
-            int living = 0;
-            bool current =0;
-            if(index%(m+2)!=0 || (index+1)%(m+2)! = 0){
-                living == top[i-1] + top[i] + top[i+1] +
-                        world[i-1] +      + world[i+1] +
-                        bot[i-1] + bot[i] + bot[i+1];
-                if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
-                new_world[i] = 1;
-                }
-                else {
-                    new_world[i] = 0;
+        
+       
+
+        bool* create_world(int m, int n){
+            m = m+2;
+            bool * world;//temperory grid to hold randomly generated world
+            world = new bool[m*n]();
+            srand(time(0));
+            //assigning random values to world except for borders
+            for(int i = 0; i < n ; i++){
+                for(int j = 1; j< m-1; j++){
+                    world[(i*m)+j] = rand()%2;
                 }
             }
-            
-
+            return world;
         }
 
 
-        bool * create_world(int m, int n){
-        map = new game_map;
+
+}
+namespace cpu{
+/**takes the number of living cell and the current bit
+ * returns an boolean
+ */
+    bool dead_or_alive(int living, bool current){
+        bool newcell = current;
+        //std::cout<< current <<" ";
+        if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+            newcell = 1;
+        }
+        else {
+        newcell = 0;
+        }
+        
+        return newcell;
+    }
+    //creates a matrix of m by n and loading cells with 0|1 and surround it with a border of 0
+    bool * create_world(int m, int n)
+    {
+        bool* world;
         //creating the array so that it is loaded with 0s to avoid if statments. 
         world = new bool[m*n]();
         
@@ -68,92 +126,56 @@ namespace GPU {
                 world[i*m+j] = rand()%2;
             }
         }
-        map.top = world[]
         return world;
     }
 
-
-
-}
-/**takes the number of living cell and the current bit
- * returns an boolean
- */
-bool dead_or_alive(int living, bool current){
-    bool newcell = current;
-    //std::cout<< current <<" ";
-    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
-        newcell = 1;
-    }
-    else {
-       newcell = 0;
-    }
-    
-    return newcell;
-}
-//creates a matrix of m by n and loading cells with 0|1 and surround it with a border of 0
-bool * create_world(int m, int n)
-{
-    bool* world;
-    //creating the array so that it is loaded with 0s to avoid if statments. 
-    world = new bool[m*n]();
-    
-    srand(time(0));
-    for(int i = 0; i < m ; i++){
-        //only setting the inside box to randomized values of 1 or 0
-        for(int j = 1; j< n-1; j++){
-            world[i*m+j] = rand()%2;
-        }
-    }
-    return world;
-}
-
-//takes a 2d int matrix and dimentions and print it
-void print_matrix(bool* world,int m, int n){
-    for (int i = 0; i < m; i++){
-            cout<<"| ";
-            for(int j =0; j < n; j++){
-                cout<<world[i*m+j]<<" ";
+    //takes a 2d int matrix and dimentions and print it
+    void print_matrix(bool* world,int m, int n){
+        for (int i = 0; i < m; i++){
+                cout<<"| ";
+                for(int j =0; j < n; j++){
+                    cout<<world[i*m+j]<<" ";
+                }
+                cout<<"|\n";
             }
-            cout<<"|\n";
-        }
-}
-
-//return the time it take to run next turn for it number of iterations
-auto bench_mark(bool*(*func)(bool*,int,int),bool* world, int m, int n,int it){
-auto const start_time = std::chrono::steady_clock::now();
-for(int i = 0; i < it; i++){
-
-
-    world = func(world,m,n);
-}
-auto const end_time = std::chrono::steady_clock::now();
-return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
-//cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
-}
-
-/**
- * takes a 2d int matrix,and the dimentions
- * goes through each cell
- * determine the next frame of the matrix 
- */
-bool * next_turn(bool* world,int m,int n)
-{
-    bool* new_world;
-    new_world= new bool[m*n]();
-    //#pragma omp parallel for
-    for(int i = 1;i < m-1 ;i++){ 
-        for(int j = 0; j < n; j++){
-            int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
-                        world[i*m+(j+1)] + world[i*m+(j-1)] + 
-                        world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
-            new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
-        }
     }
-    //free(world); this is slower
-    delete[] world;
-    return new_world;
-}
 
+    //return the time it take to run next turn for it number of iterations
+    auto bench_mark(bool*(*func)(bool*,int,int),bool* world, int m, int n,int it){
+    auto const start_time = std::chrono::steady_clock::now();
+    for(int i = 0; i < it; i++){
+
+
+        world = func(world,m,n);
+    }
+    auto const end_time = std::chrono::steady_clock::now();
+    return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
+    //cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
+    }
+
+    /**
+    * takes a 2d int matrix,and the dimentions
+    * goes through each cell
+    * determine the next frame of the matrix 
+    */
+    bool * next_turn(bool* world,int m,int n)
+    {
+        bool* new_world;
+        new_world= new bool[m*n]();
+        //#pragma omp parallel for
+        for(int i = 1;i < m-1 ;i++){ 
+            for(int j = 0; j < n; j++){
+                int living = world[(i-1)*m+(j-1)] + world[(i-1)*m+j] + world[(i-1)*m+(j+1)] +
+                            world[i*m+(j+1)] + world[i*m+(j-1)] + 
+                            world[(i+1)*m+(j-1)] + world[(i+1)*m+j] + world[(i+1)*m+(j+1)];
+                new_world[i*m+j] = dead_or_alive(living, world[i*m+j]);
+            }
+        }
+        //free(world); this is slower
+        delete[] world;
+        return new_world;
+    }
+}
 int main(int argc, char *argv[]){
     if(argc <5 || argc> 6){
         cout<<"Usage: ./gol [width] [height] [iterations] [number of tests][number of threads](if not decleared use all)]";
@@ -161,9 +183,7 @@ int main(int argc, char *argv[]){
     }
     //set size larger so we can add border of 0 surrounding the map
     int m = atoi(argv[1]);
-    m = m + 2;
     int n = atoi(argv[2]);
-    n = n + 2;
     int iterations = atoi(argv[3]);
     int num_tests = atoi(argv[4]);
     // if(argc==6){
@@ -178,14 +198,14 @@ int main(int argc, char *argv[]){
     vector<bool*> test_cases;
     //create test cases into a vector
     for (int i = 0; i < num_tests; i++){
-        test_cases.push_back(create_world(m,n));
+        test_cases.push_back(gpu::create_world(m,n));
     }
     //run each case
     for(vector<bool*>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
-        time +=bench_mark(next_turn,*i,m,n,iterations);
+        time +=gpu::bench_mark(gpu::next_turn,*i,m,n,iterations);
     }
     //print out the average
-    cout<< "ran "<< num_tests << " random games of "<< n-2 << " by "<< m-2 << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<" us"<<endl;
+    cout<< "ran "<< num_tests << " random games of "<< n << " by "<< m << " for "<< iterations<< " iterations, average time is: "<< time/num_tests<<" us"<<endl;
     /*
     //uncomment this section to print out a iteration
     bool* world= create_world(m,n);
@@ -214,5 +234,6 @@ int main(int argc, char *argv[]){
         print_matrix(world,m,n);
     }
     */
+    cpu::print_matrix(test_cases[2],m,n);
     return 0;
 }

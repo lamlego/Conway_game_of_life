@@ -18,7 +18,7 @@ namespace gpu {
         bool *w = *world;
         bool *b = *bot;
         for(int i = 0; i< m*n; i++){
-            t[count] = w[i];
+            t[count]  = w[i];
             //cout<<w[i];
             count++;
         }
@@ -34,30 +34,41 @@ namespace gpu {
         void next_turn(bool *top, bool *core, bool* bot, bool *result,int m, int n){
             int i = blockIdx.x * blockDim.x + threadIdx.x;
             int living = 0;
-            bool current =0;
-            if(threadIdx.x != 0 ||threadIdx.x != m-1||i <(m+2)*n){
-                living = top[i-1] + top[i] + top[i+1] +
-                        core[i-1] +       core[i+1] +
-                        bot[i-1] + bot[i] + bot[i+1];
-                if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
-                result[i] = 1;
-                }
-                else {
-                    result[i] = 0;
+            bool current = core[i];
+            result[i] = current;
+            if(i < m*n){
+                //printf("h%d ",i);
+                if(i%m != 0 &&(i+1)%m!=0){ //
+                    //printf("i%d ",i);
+                    living = top[i-1] + top[i] + top[i+1] +
+                             core[i-1]+         core[i+1] +
+                             bot[i-1] + bot[i] + bot[i+1];
+                    //printf("%d living: %d\n",i,living);
+                    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+                        result[i] = 1;
+                    }else{
+                        result[i] = 0;
+                    }
                 }
             }
+            //printf("%d",result[i]);
+          
         }
+
+
     auto bench_mark(void(*func)(bool *,bool *,bool *,bool *,int,int),bool *world, int m, int n,int it){
         
-            int size = (m*(n+2))*sizeof(bool);
+            int size = (n*(m+2))*sizeof(bool);
             bool *top, *bot;
             bool *d_top, *d_core, *d_bot, *d_result;
             cudaMalloc((void**)&d_top,size);
             cudaMalloc((void **)&d_core,size);
             cudaMalloc((void **)&d_bot,size);
             cudaMalloc((void**)&d_result,size);
-            top = (bool *)malloc(size);
-            bot = (bool *)malloc(size);
+            //top = (bool *)malloc(size);
+            //bot = (bool *)malloc(size);
+            top = new bool[size]();
+            bot = new bool[size]();
             //cudaMemcpy(d_new_world, new_world, size, cudaMemcpyHostToDevice);
             auto const start_time = std::chrono::steady_clock::now();
             for (int i=0; i< it; i++){
@@ -66,10 +77,18 @@ namespace gpu {
                 cudaMemcpy(d_top, top, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_core, world, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_bot, bot, size, cudaMemcpyHostToDevice);
-                gpu::next_turn<<<ceil(n/128),128>>>(d_top,d_core,d_bot,d_result,m,n);
-                cudaMemcpy(world,&d_result,size,cudaMemcpyDeviceToHost);
+                cudaDeviceSynchronize();
+                gpu::next_turn<<<1,32>>>(d_top,d_core,d_bot,d_result,m+2,n);
+                cudaMemcpy(world, &d_result,size,cudaMemcpyDeviceToHost);
             }
             auto const end_time = std::chrono::steady_clock::now();
+            
+            for(int i = 0;i<n;i++){
+                for(int j =0;j<(m+2);j++){
+                    cout<<world[i*(m+2)+j];
+                }
+            cout<< endl;
+            }
             free(top);free(bot);
             cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);cudaFree(d_result);
             return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
@@ -81,7 +100,7 @@ namespace gpu {
 
         bool* create_world(int m, int n){
             m = m+2;
-            bool * world;//temperory grid to hold randomly generated world
+            bool * world;// grid to hold randomly generated world
             world = new bool[m*n]();
             srand(time(0));
             //assigning random values to world except for borders
@@ -200,9 +219,9 @@ int main(int argc, char *argv[]){
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(gpu::create_world(m,n));
     }
-    for(int i = 0;i<10;i++){
-        for(int j =0;j<12;j++){
-            cout<<test_cases[1][i*12+j];
+    for(int i = 0;i<n;i++){
+        for(int j =0;j<m+2;j++){
+            cout<<test_cases[0][i*(m+2)+j];
         }
     cout<< endl;
     }
@@ -242,11 +261,6 @@ int main(int argc, char *argv[]){
     }
     */
     
-    for(int i = 0;i<10;i++){
-        for(int j =0;j<12;j++){
-            cout<<test_cases[1][i*12+j];
-        }
-    cout<< endl;
-    }
+    
     return 0;
 }

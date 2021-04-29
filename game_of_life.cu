@@ -35,7 +35,7 @@ namespace gpu {
             int i = blockIdx.x * blockDim.x + threadIdx.x;
             int living = 0;
             bool current = core[i];
-            result[i] = current;
+            //result[i] = current;
             if(i < m*n){
                 //printf("h%d ",i);
                 if(i%m != 0 &&(i+1)%m!=0){ //
@@ -45,13 +45,14 @@ namespace gpu {
                              bot[i-1] + bot[i] + bot[i+1];
                     //printf("%d living: %d\n",i,living);
                     if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
-                        result[i] = 1;
+                        result[i] = true;
                     }else{
-                        result[i] = 0;
+                        result[i] = false;
                     }
                 }
+                //printf("%d",result[i]);
             }
-            //printf("%d",result[i]);
+            
           
         }
 
@@ -64,7 +65,7 @@ namespace gpu {
             cudaMalloc((void**)&d_top,size);
             cudaMalloc((void **)&d_core,size);
             cudaMalloc((void **)&d_bot,size);
-            cudaMalloc((void**)&d_result,size);
+            cudaMallocManaged(&d_result,size);
             //top = (bool *)malloc(size);
             //bot = (bool *)malloc(size);
             top = new bool[size]();
@@ -76,21 +77,23 @@ namespace gpu {
                 gpu::split(&world,&top,&bot,m,n);
                 cudaMemcpy(d_top, top, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_core, world, size, cudaMemcpyHostToDevice);
+                //cudaMemcpy(d_result, world, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_bot, bot, size, cudaMemcpyHostToDevice);
+                gpu::next_turn<<<ceil((m+2)*n/32),32>>>(d_top,d_core,d_bot,d_result,m+2,n);
                 cudaDeviceSynchronize();
-                gpu::next_turn<<<1,32>>>(d_top,d_core,d_bot,d_result,m+2,n);
-                cudaMemcpy(world, &d_result,size,cudaMemcpyDeviceToHost);
+                //cudaMemcpy(world, &d_top,size,cudaMemcpyDeviceToHost);
+                
             }
             auto const end_time = std::chrono::steady_clock::now();
             
             for(int i = 0;i<n;i++){
                 for(int j =0;j<(m+2);j++){
-                    cout<<world[i*(m+2)+j];
+                    cout<<d_result[i*(m+2)+j];
                 }
             cout<< endl;
             }
             free(top);free(bot);
-            cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);cudaFree(d_result);
+            cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);//cudaFree(d_result);
             return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
             //cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
             }

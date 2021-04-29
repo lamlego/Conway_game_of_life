@@ -34,8 +34,10 @@ namespace gpu {
         void next_turn(bool *top, bool *core, bool* bot, bool *result,int m, int n){
             int i = blockIdx.x * blockDim.x + threadIdx.x;
             int living = 0;
+            //printf("%d",i);
             bool current = core[i];
             //result[i] = current;
+            //__syncthreads();
             if(i < m*n){
                 //printf("h%d ",i);
                 if(i%m != 0 &&(i+1)%m!=0){ //
@@ -44,7 +46,7 @@ namespace gpu {
                              core[i-1]+         core[i+1] +
                              bot[i-1] + bot[i] + bot[i+1];
                     //printf("%d living: %d\n",i,living);
-                    if((current == 1 && (living == 3 || living == 2)) || (current == 0 && living == 3)){
+                    if(living == 3 || (current&& living ==2)){
                         result[i] = true;
                     }else{
                         result[i] = false;
@@ -62,38 +64,44 @@ namespace gpu {
             int size = (n*(m+2))*sizeof(bool);
             bool *top, *bot;
             bool *d_top, *d_core, *d_bot, *d_result;
+
+
             cudaMalloc((void**)&d_top,size);
             cudaMalloc((void **)&d_core,size);
             cudaMalloc((void **)&d_bot,size);
-            cudaMallocManaged(&d_result,size);
+            cudaMalloc((void **)&d_result,size);
+            //cudaMallocManaged((void**)&d_result,size);
+            
             //top = (bool *)malloc(size);
             //bot = (bool *)malloc(size);
             top = new bool[size]();
             bot = new bool[size]();
-            //cudaMemcpy(d_new_world, new_world, size, cudaMemcpyHostToDevice);
+            
             auto const start_time = std::chrono::steady_clock::now();
+
             for (int i=0; i< it; i++){
                 //call cuda function here
                 gpu::split(&world,&top,&bot,m,n);
+                //cout<<"-----result-------\n";
                 cudaMemcpy(d_top, top, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_core, world, size, cudaMemcpyHostToDevice);
-                //cudaMemcpy(d_result, world, size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_bot, bot, size, cudaMemcpyHostToDevice);
-                gpu::next_turn<<<ceil((m+2)*n/32),32>>>(d_top,d_core,d_bot,d_result,m+2,n);
+                gpu::next_turn<<<ceil((m+2)*n/1024),1024>>>(d_top,d_core,d_bot,d_result,m+2,n);
                 cudaDeviceSynchronize();
-                //cudaMemcpy(world, &d_top,size,cudaMemcpyDeviceToHost);
+                cudaMemcpy(world, &d_result,size,cudaMemcpyDeviceToHost);
                 
             }
+
             auto const end_time = std::chrono::steady_clock::now();
             
-            for(int i = 0;i<n;i++){
-                for(int j =0;j<(m+2);j++){
-                    cout<<d_result[i*(m+2)+j];
-                }
-            cout<< endl;
-            }
-            free(top);free(bot);
-            cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);//cudaFree(d_result);
+            // for(int i = 0;i<n;i++){
+            //     for(int j =0;j<(m+2);j++){
+            //         cout<<world[i*(m+2)+j];
+            //     }
+            // cout<< endl;
+            // }
+            // free(top);free(bot);
+            // cudaFree(d_core);cudaFree(d_top);cudaFree(d_bot);cudaFree(d_result);
             return(std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count());
             //cout<< std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count() << " micro seconds\n";
             }
@@ -222,13 +230,13 @@ int main(int argc, char *argv[]){
     for (int i = 0; i < num_tests; i++){
         test_cases.push_back(gpu::create_world(m,n));
     }
-    for(int i = 0;i<n;i++){
-        for(int j =0;j<m+2;j++){
-            cout<<test_cases[0][i*(m+2)+j];
-        }
-    cout<< endl;
-    }
-    cout<<"------------\n";
+    // for(int i = 0;i<n;i++){
+    //     for(int j =0;j<m+2;j++){
+    //         cout<<test_cases[0][i*(m+2)+j];
+    //     }
+    // cout<< endl;
+    // }
+    // cout<<"------------\n";
     //run each case
     for(vector<bool*>::iterator i = test_cases.begin(); i != test_cases.end(); ++i){
         time +=gpu::bench_mark(gpu::next_turn,*i,m,n,iterations);
